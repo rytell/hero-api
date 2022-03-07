@@ -7,9 +7,11 @@ import { UnstakeController } from './unstake/unstake.controller';
 import { UnstakeModule } from './unstake/unstake.module';
 import { ClaimController } from './claim/claim.controller';
 import { ClaimModule } from './claim/claim.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { config } from './orm.config';
 
 @Module({
-  imports: [StakeModule, UnstakeModule, ClaimModule],
+  imports: [StakeModule, UnstakeModule, ClaimModule, TypeOrmModule.forRoot(config)],
   controllers: [AppController, StakeController, UnstakeController, ClaimController],
   providers: [AppService],
 })
