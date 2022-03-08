@@ -11,7 +11,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { config } from './orm.config';
 
 @Module({
-  imports: [StakeModule, UnstakeModule, ClaimModule, TypeOrmModule.forRoot(config)],
+  imports: [StakeModule, UnstakeModule, ClaimModule,], //TypeOrmModule.forRoot(config)],
   controllers: [AppController, StakeController, UnstakeController, ClaimController],
   providers: [AppService],
 })
