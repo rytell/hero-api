@@ -33,7 +33,8 @@
     "rimraf": "^3.0.2",
     "rxjs": "^7.2.0",
     "typeorm": "^0.2.44",
-    "web3": "^1.7.1"
+    "web3": "^1.7.1",
+    "webpack": "^5.70.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^8.0.0",
