@@ -1,4 +1,4 @@
-import {  Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -10,8 +10,13 @@ import { ClaimController } from './claim/claim.controller';
 import { ClaimModule } from './claim/claim.module';
 
 @Module({
-  imports: [HttpModule, StakeModule, UnstakeModule, ClaimModule,], //TypeOrmModule.forRoot(config)],
-  controllers: [AppController, StakeController, UnstakeController, ClaimController],
+  imports: [HttpModule, StakeModule, UnstakeModule, ClaimModule], //TypeOrmModule.forRoot(config)],
+  controllers: [
+    AppController,
+    StakeController,
+    UnstakeController,
+    ClaimController,
+  ],
   providers: [AppService],
 })
 export class AppModule {}
