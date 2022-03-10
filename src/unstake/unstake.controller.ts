@@ -3,11 +3,10 @@ import { UnstakeService } from './unstake.service';
 
 @Controller('unstake')
 export class UnstakeController {
-    constructor(private readonly unstakeService: UnstakeService) {}
+  constructor(private readonly unstakeService: UnstakeService) {}
 
-    @Get()
-    getHello(): string {
-        return this.unstakeService.getHello();
-    }
-
+  @Get()
+  getHello(): string {
+    return this.unstakeService.getHello();
+  }
 }
