@@ -3,6 +3,6 @@ import { StakeService } from './stake.service';
 
 @Module({
   providers: [StakeService],
-  exports: [StakeService]
+  exports: [StakeService],
 })
 export class StakeModule {}
