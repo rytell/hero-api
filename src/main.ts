@@ -1,8 +1,9 @@
 import { NestFactory } from '@nestjs/core';
 import * as dotenv from 'dotenv';
 import { AppModule } from './app.module';
-import { STAKING_HERO } from './constants/constants';
+import { HeroStakingEvent, STAKING_HERO } from './constants/constants';
 import abi from './constants/abis/staking-hero.json';
+import fs from 'fs';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -22,32 +23,74 @@ async function bootstrap() {
     STAKING_HERO[process.env.CHAIN || 43113],
   );
 
-  // ReceivedERC721
-  // UnstakedHero
+  const contractState = [];
+  const updateDbSnapshot = (event: HeroStakingEvent) => {
+    contractState.push(event);
+
+    // compare function
+    const orderWithBlockNumbers = (
+      a: HeroStakingEvent,
+      b: HeroStakingEvent,
+    ) => {
+      return b.blockNumber - a.blockNumber;
+    };
+
+    // get only last event triggered for a hero
+    const onlyLastState = (event: HeroStakingEvent, index) => {
+      const firstHeroIndex = contractState.findIndex(
+        (evt: HeroStakingEvent) =>
+          evt.returnValues.heroNumber === event.returnValues.heroNumber,
+      );
+
+      return firstHeroIndex === index;
+    };
+
+    contractState.sort(orderWithBlockNumbers);
+    const filteredContractState = contractState.filter(onlyLastState);
+
+    // get a local dump for this
+    const data = JSON.stringify(filteredContractState, null, 2);
+    fs.writeFileSync('currentdbsnap.json', data);
+  };
 
   // StakedHero
   stakeHeroContract.events
-    .StakedHero(
-      {
-        fromBlock: 7091214,
-      },
-      function (error, event) {
-        console.log('event: ', event);
-      },
-    )
+    .StakedHero({
+      fromBlock: 7091214,
+    })
     .on('connected', function (subscriptionId) {
-      console.log('connected: ', subscriptionId);
+      console.log('Connected: ', subscriptionId);
     })
     .on('data', function (event) {
-      console.log('data: ', event); // same results as the optional callback above
+      updateDbSnapshot(event);
     })
     .on('changed', function (event) {
       // remove event from local database
-      console.log('changed: ', event);
+      console.log('Changed: ', event);
     })
     .on('error', function (error, receipt) {
       // If the transaction was rejected by the network with a receipt, the second parameter will be the receipt.
-      console.log('error: ', error);
+      console.log('Error: ', error, 'Receipt: ', receipt);
+    });
+
+  // UnstakedHero
+  stakeHeroContract.events
+    .UnstakedHero({
+      fromBlock: 7091214,
+    })
+    .on('connected', function (subscriptionId) {
+      console.log('Connected: ', subscriptionId);
+    })
+    .on('data', function (event) {
+      updateDbSnapshot(event);
+    })
+    .on('changed', function (event) {
+      // remove event from local database
+      console.log('Changed: ', event);
+    })
+    .on('error', function (error, receipt) {
+      // If the transaction was rejected by the network with a receipt, the second parameter will be the receipt.
+      console.log('Error: ', error, 'Receipt: ', receipt);
     });
 }
 bootstrap();
