@@ -1,4 +1,5 @@
-import { Column, Entity } from "typeorm";
+import { Wearable } from "src/wearable/wearable.entity";
+import { Column, Entity, ManyToMany, JoinTable } from "typeorm";
 import { BaseEntity } from "../base-entity";
 
 @Entity('heros')
@@ -38,4 +39,8 @@ export class Hero extends BaseEntity{
 
     @Column({nullable: false})
     staked: boolean;
+
+    @ManyToMany(type => Wearable, wearable => wearable.heros)
+    @JoinTable()
+    wearables: Wearable[];
 }
