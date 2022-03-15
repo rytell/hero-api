@@ -14,7 +14,15 @@ import { HeroModule } from './hero/hero.module';
 import { WearableModule } from './wearable/wearable.module';
 
 @Module({
-  imports: [HttpModule, StakeModule, UnstakeModule, ClaimModule, TypeOrmModule.forRoot(config), HeroModule, WearableModule],
+  imports: [
+    HttpModule,
+    StakeModule,
+    UnstakeModule,
+    ClaimModule,
+    // TypeOrmModule.forRoot(config),
+    HeroModule,
+    WearableModule,
+  ],
   controllers: [
     AppController,
     StakeController,
