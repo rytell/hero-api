@@ -39,3 +39,4 @@ lerna-debug.log*
 
 # Deepest secrets
 .env
+.env.staging
