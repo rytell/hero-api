@@ -4,8 +4,8 @@ import { AppModule } from './app.module';
 import { syncDb } from './dbUpdater';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
   dotenv.config();
+  const app = await NestFactory.create(AppModule);
   await app.listen(3000);
   // syncDb();
 }
