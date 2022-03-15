@@ -36,3 +36,6 @@ lerna-debug.log*
 
 # Stake Hero Snaps
 ./currentdbsnap.json
+
+# Deepest secrets
+.env
