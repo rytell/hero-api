@@ -19,7 +19,7 @@ import { WearableModule } from './wearable/wearable.module';
     StakeModule,
     UnstakeModule,
     ClaimModule,
-    // TypeOrmModule.forRoot(config),
+    TypeOrmModule.forRoot(config),
     HeroModule,
     WearableModule,
   ],
