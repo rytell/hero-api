@@ -1,4 +1,5 @@
 export class CreateHeroDto {
-    heroNumber: number;
-    blockNumber: number;
+  heroNumber: number;
+  blockNumber: number;
+  staker: string;
 }

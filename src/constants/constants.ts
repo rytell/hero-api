@@ -1,5 +1,12 @@
 import { ChainId } from '@rytell/sdk';
 
+export interface HeroContract {
+  staked: boolean;
+  lastStaked: string;
+  lastUnstaked: string;
+  heroId: string;
+}
+
 export interface HeroStakingEvent {
   address: string;
   blockNumber: number;

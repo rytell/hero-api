@@ -5,26 +5,26 @@ import { HeroService } from './hero.service';
 
 @Controller('hero')
 export class HeroController {
-    constructor(private readonly heroService: HeroService) {}
+  constructor(private readonly heroService: HeroService) {}
 
-    @Post()
-    create(@Body() body ): Promise<Hero> {
-        const createHeroDto : CreateHeroDto = body.createHeroDto
-        return this.heroService.create( createHeroDto );
-    }
+  @Post()
+  create(@Body() body): Promise<Hero> {
+    const createHeroDto: CreateHeroDto = body.createHeroDto;
+    return this.heroService.create(createHeroDto);
+  }
 
-    @Get()
-    findAll(): Promise<Hero[]> {
-        return this.heroService.findAll();
-    }
+  @Get()
+  findAll(): Promise<Hero[]> {
+    return this.heroService.findAll();
+  }
 
-    @Get(':id')
-    findOne(@Param('id') id: string): Promise<Hero> {
-      return this.heroService.findOne(id);
-    }
-  
-    @Delete(':id')
-    remove(@Param('id') id: string): Promise<void> {
-      return this.heroService.remove(id);
-    }
+  @Get(':id')
+  findOne(@Param('id') id: string): Promise<Hero> {
+    return this.heroService.findOne(id);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string): Promise<void> {
+    return this.heroService.remove(id);
+  }
 }
