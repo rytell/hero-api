@@ -1,10 +1,17 @@
 import { HeroStakingEvent, STAKING_HERO } from './constants/constants';
 import abi from './constants/abis/staking-hero.json';
+import { INestApplication } from '@nestjs/common';
+import axios from 'axios';
 
-// TODO: we need to bootstrap from starting block
-// TODO: we need to subscribe to new events from last block
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const Web3 = require('web3');
+const web3 = new Web3(
+    new Web3.providers.WebsocketProvider(
+        'wss://api.avax-test.network/ext/bc/C/ws',
+    ),
+);
 
-const MAX_BLOCKS_BEHIND = 2047;
+const MAX_BLOCKS_BEHIND = 2045;
 
 const subscribeToEvents = (stakeHeroContract, callback, currentBlock) => {
     // StakedHero
@@ -15,8 +22,8 @@ const subscribeToEvents = (stakeHeroContract, callback, currentBlock) => {
         .on('connected', function (subscriptionId) {
             console.log('Connected: ', subscriptionId);
         })
-        .on('data', function (event) {
-            callback(event);
+        .on('data', async function (event: HeroStakingEvent) {
+            callback(event); // async
         })
         .on('changed', function (event) {
             // remove event from local database
@@ -30,13 +37,13 @@ const subscribeToEvents = (stakeHeroContract, callback, currentBlock) => {
     // UnstakedHero
     stakeHeroContract.events
         .UnstakedHero({
-            fromBlock: 'latest',
+            fromBlock: currentBlock - MAX_BLOCKS_BEHIND,
         })
         .on('connected', function (subscriptionId) {
             console.log('Connected: ', subscriptionId);
         })
-        .on('data', function (event) {
-            callback(event);
+        .on('data', function (event: HeroStakingEvent) {
+            callback(event); //async
         })
         .on('changed', function (event) {
             // remove event from local database
@@ -49,56 +56,25 @@ const subscribeToEvents = (stakeHeroContract, callback, currentBlock) => {
 };
 
 const buildSmartContractSnapshot = async (callback) => {
-    const contractState = [];
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const Web3 = require('web3');
-    const web3 = new Web3(
-        new Web3.providers.WebsocketProvider(
-            'wss://api.avax-test.network/ext/bc/C/ws',
-        ),
-    );
-
     const stakeHeroContract = new web3.eth.Contract(
         abi,
         STAKING_HERO[process.env.CHAIN || 43113],
     );
 
-    const updateDbSnapshot = (event: HeroStakingEvent) => {
-        contractState.push(event);
-
-        // compare function
-        const orderWithBlockNumbers = (
-            a: HeroStakingEvent,
-            b: HeroStakingEvent,
-        ) => {
-            return b.blockNumber - a.blockNumber;
-        };
-
-        // get only last event triggered for a hero
-        const onlyLastState = (event: HeroStakingEvent, index) => {
-            const firstHeroIndex = contractState.findIndex(
-                (evt: HeroStakingEvent) =>
-                    evt.returnValues.heroNumber ===
-                    event.returnValues.heroNumber,
-            );
-
-            return firstHeroIndex === index;
-        };
-
-        contractState.sort(orderWithBlockNumbers);
-        callback(contractState.filter(onlyLastState));
-    };
-
     const currentBlock = await web3.eth.getBlockNumber();
 
-    subscribeToEvents(stakeHeroContract, updateDbSnapshot, currentBlock);
+    subscribeToEvents(stakeHeroContract, callback, currentBlock);
 };
 
-export const syncDb = () => {
-    const updateDb = (contractState: HeroStakingEvent[]) => {
-        contractState.map((heroinfo: HeroStakingEvent) => {
-            console.log(heroinfo);
-            // should call controller update for stake or unstake
+export const syncDb = (app: INestApplication) => {
+    const updateDb = async (heroinfo: HeroStakingEvent) => {
+        // should call controller update for stake or unstake
+        await axios.post(`${await app.getUrl()}/hero`, {
+            createHeroDto: {
+                heroNumber: heroinfo.returnValues.heroNumber,
+                blockNumber: heroinfo.returnValues.when,
+                staker: heroinfo.returnValues.who,
+            },
         });
     };
 
