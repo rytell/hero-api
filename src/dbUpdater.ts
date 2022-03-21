@@ -82,6 +82,7 @@ export const syncDb = async (app: INestApplication) => {
         const currentBlock = await web3.eth.getBlockNumber();
         subscribeToEvents(stakeHeroContract, updateDb, currentBlock);
     } catch (error) {
-        subscribeToEvents(stakeHeroContract, updateDb, 'latest');
+        console.log('Could not subscribe to events, TODO: trigger an alert');
+        console.log(error);
     }
 };
