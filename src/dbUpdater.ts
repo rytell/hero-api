@@ -55,18 +55,7 @@ const subscribeToEvents = (stakeHeroContract, callback, currentBlock) => {
         });
 };
 
-const buildSmartContractSnapshot = async (callback) => {
-    const stakeHeroContract = new web3.eth.Contract(
-        abi,
-        STAKING_HERO[process.env.CHAIN || 43113],
-    );
-
-    const currentBlock = await web3.eth.getBlockNumber();
-
-    subscribeToEvents(stakeHeroContract, callback, currentBlock);
-};
-
-export const syncDb = (app: INestApplication) => {
+export const syncDb = async (app: INestApplication) => {
     const updateDb = async (heroinfo: HeroStakingEvent) => {
         // should call controller update for stake or unstake
         await axios.post(`${await app.getUrl()}/hero`, {
@@ -78,5 +67,12 @@ export const syncDb = (app: INestApplication) => {
         });
     };
 
-    buildSmartContractSnapshot(updateDb);
+    const stakeHeroContract = new web3.eth.Contract(
+        abi,
+        STAKING_HERO[process.env.CHAIN || 43113],
+    );
+
+    const currentBlock = await web3.eth.getBlockNumber();
+
+    subscribeToEvents(stakeHeroContract, updateDb, currentBlock);
 };
