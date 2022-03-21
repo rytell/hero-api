@@ -48,7 +48,7 @@ const subscribeToEvents = (stakeHeroContract, callback, currentBlock) => {
         });
 };
 
-const buildSmartContractSnapshot = (callback) => {
+const buildSmartContractSnapshot = async (callback) => {
     const contractState = [];
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const Web3 = require('web3');
@@ -89,7 +89,7 @@ const buildSmartContractSnapshot = (callback) => {
         callback(contractState.filter(onlyLastState));
     };
 
-    const currentBlock = web3.eth.getBlockNumber();
+    const currentBlock = await web3.eth.getBlockNumber();
 
     subscribeToEvents(stakeHeroContract, updateDbSnapshot, currentBlock);
 };
