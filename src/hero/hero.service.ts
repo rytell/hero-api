@@ -21,12 +21,28 @@ export class HeroService {
             hero_number: createHeroDto.heroNumber,
         });
 
+        const herosAtContract: HeroContract[] = (
+            await this.getCallerHerosStatus(createHeroDto.staker)
+        ).map((heroProps) => heroFromProps(heroProps));
+
+        const heroContract = herosAtContract?.find(
+            (heroProps) =>
+                heroProps.heroId === createHeroDto.heroNumber.toString(),
+        ) as HeroContract;
+
+        if (!heroContract) {
+            return;
+        }
+
         if (heroDB) {
             if (heroDB?.block_number < createHeroDto.blockNumber) {
-                const heroAPI = await this.getHeroMetadata(createHeroDto);
-                const hero = {
+                const hero: Hero = {
                     ...heroDB,
-                    ...heroAPI,
+                    staked: heroContract.staked,
+                    block_number: Math.max(
+                        +heroContract.lastStaked,
+                        +heroContract.lastUnstaked,
+                    ),
                     updated_at: new Date(new Date().toUTCString()),
                 };
                 return this.herosRepository.save(hero);
@@ -35,24 +51,14 @@ export class HeroService {
             }
         } else {
             const heroAPI = await this.getHeroMetadata(createHeroDto);
-            const herosAtContract: HeroContract[] = (
-                await this.getCallerHerosStatus(createHeroDto.staker)
-            ).map((heroProps) => heroFromProps(heroProps));
 
-            const heroContract = herosAtContract?.find(
-                (heroProps) =>
-                    heroProps.heroId === createHeroDto.heroNumber.toString(),
-            ) as HeroContract;
-            if (heroContract) {
-                heroAPI.staked = heroContract.staked;
-                heroAPI.block_number = Math.max(
-                    +heroContract.lastStaked,
-                    +heroContract.lastStaked,
-                );
-                heroAPI.hero_number = +heroContract.heroId;
-                return this.herosRepository.save(heroAPI);
-            }
-            return;
+            heroAPI.staked = heroContract.staked;
+            heroAPI.block_number = Math.max(
+                +heroContract.lastStaked,
+                +heroContract.lastUnstaked,
+            );
+            heroAPI.hero_number = +heroContract.heroId;
+            return this.herosRepository.save(heroAPI);
         }
     }
 

@@ -17,7 +17,10 @@ const subscribeToEvents = (stakeHeroContract, callback, currentBlock) => {
     // StakedHero
     stakeHeroContract.events
         .StakedHero({
-            fromBlock: currentBlock - MAX_BLOCKS_BEHIND,
+            fromBlock:
+                currentBlock === 'latest'
+                    ? 'latest'
+                    : currentBlock - MAX_BLOCKS_BEHIND,
         })
         .on('connected', function (subscriptionId) {
             console.log('Connected: ', subscriptionId);
@@ -37,7 +40,10 @@ const subscribeToEvents = (stakeHeroContract, callback, currentBlock) => {
     // UnstakedHero
     stakeHeroContract.events
         .UnstakedHero({
-            fromBlock: currentBlock - MAX_BLOCKS_BEHIND,
+            fromBlock:
+                currentBlock === 'latest'
+                    ? 'latest'
+                    : currentBlock - MAX_BLOCKS_BEHIND,
         })
         .on('connected', function (subscriptionId) {
             console.log('Connected: ', subscriptionId);
@@ -61,7 +67,7 @@ export const syncDb = async (app: INestApplication) => {
         await axios.post(`${await app.getUrl()}/hero`, {
             createHeroDto: {
                 heroNumber: heroinfo.returnValues.heroNumber,
-                blockNumber: heroinfo.returnValues.when,
+                blockNumber: heroinfo.returnValues.when, // not necessary
                 staker: heroinfo.returnValues.who,
             },
         });
@@ -72,7 +78,10 @@ export const syncDb = async (app: INestApplication) => {
         STAKING_HERO[process.env.CHAIN || 43113],
     );
 
-    const currentBlock = await web3.eth.getBlockNumber();
-
-    subscribeToEvents(stakeHeroContract, updateDb, currentBlock);
+    try {
+        const currentBlock = await web3.eth.getBlockNumber();
+        subscribeToEvents(stakeHeroContract, updateDb, currentBlock);
+    } catch (error) {
+        subscribeToEvents(stakeHeroContract, updateDb, 'latest');
+    }
 };
