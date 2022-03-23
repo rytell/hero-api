@@ -17,6 +17,11 @@ export class HeroService {
     ) {}
     //   createHero: Hero
     async create(createHeroDto: CreateHeroDto): Promise<Hero> | undefined {
+        const validateErrors = this.validateHeroDTO(createHeroDto);
+        if( validateErrors.length > 0 ){
+            throw validateErrors
+        }
+        
         const heroDB = await this.herosRepository.findOne({
             hero_number: createHeroDto.heroNumber,
         });
@@ -35,14 +40,12 @@ export class HeroService {
         }
 
         if (heroDB) {
-            if (heroDB?.block_number < createHeroDto.blockNumber) {
+            if (heroDB?.lastStaked < heroContract.lastStaked || heroDB?.lastUnstaked < heroContract.lastUnstaked ) {
                 const hero: Hero = {
                     ...heroDB,
                     staked: heroContract.staked,
-                    block_number: Math.max(
-                        +heroContract.lastStaked,
-                        +heroContract.lastUnstaked,
-                    ),
+                    lastStaked: heroContract.lastStaked,
+                    lastUnstaked: heroContract.lastUnstaked,
                     updated_at: new Date(new Date().toUTCString()),
                 };
                 return this.herosRepository.save(hero);
@@ -53,10 +56,8 @@ export class HeroService {
             const heroAPI = await this.getHeroMetadata(createHeroDto);
 
             heroAPI.staked = heroContract.staked;
-            heroAPI.block_number = Math.max(
-                +heroContract.lastStaked,
-                +heroContract.lastUnstaked,
-            );
+            heroAPI.lastStaked = heroContract.lastStaked;
+            heroAPI.lastUnstaked = heroContract.lastUnstaked;
             heroAPI.hero_number = +heroContract.heroId;
             return this.herosRepository.save(heroAPI);
         }
@@ -86,7 +87,6 @@ export class HeroService {
         hero.strength = heroAttr.strength;
         hero.will = heroAttr.will;
         hero.cunning = heroAttr.cunning;
-        hero.block_number = createHeroDto.blockNumber;
         hero.hero_number = createHeroDto.heroNumber;
         return hero;
     }
@@ -121,5 +121,24 @@ export class HeroService {
 
     async remove(id: string): Promise<void> {
         await this.herosRepository.delete(id);
+    }
+
+    validateHeroDTO(createHeroDto: CreateHeroDto): string {
+        if( createHeroDto.heroNumber != null ){
+            if( +createHeroDto.heroNumber === 0 ){
+                return 'Error, heroNumber required';
+            }
+        } else {
+            return 'Error, heroNumber required';
+        }
+
+        if( createHeroDto.staker != null ){
+            if( createHeroDto.staker?.trim() === '' ){
+                return 'Error, staker required';
+            }
+        } else {
+            return 'Error, staker required';
+        }
+        return ''
     }
 }
