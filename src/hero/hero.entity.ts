@@ -40,8 +40,16 @@ export class Hero extends BaseEntity{
     @Column({nullable: false})
     staked: boolean;
 
-    @Column({nullable: false})
-    block_number: number;
+    @Column({nullable: true})
+    lastClaim: string
+    
+    @Column({nullable: true})
+    lastStaked: string;
+
+    @Column({nullable: true})
+    lastUnstaked: string;
+
+
 
     @ManyToMany(type => Wearable, wearable => wearable.heros)
     @JoinTable()
