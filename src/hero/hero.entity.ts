@@ -1,5 +1,5 @@
 import { Wearable } from "src/wearable/wearable.entity";
-import { Column, Entity, ManyToMany, JoinTable } from "typeorm";
+import { Column, Entity, ManyToMany, JoinTable, PrimaryColumn } from "typeorm";
 import { BaseEntity } from "../base-entity";
 
 @Entity('heros')
@@ -34,11 +34,14 @@ export class Hero extends BaseEntity{
     @Column({type: 'int',nullable: false})
     will: number;
 
-    @Column({type: 'int',nullable: false})
+    @PrimaryColumn({type: 'int',nullable: false})
     hero_number: number;
 
     @Column({nullable: false})
     staked: boolean;
+
+    @Column({nullable: true})
+    staker: string
 
     @Column({nullable: true})
     lastClaim: string

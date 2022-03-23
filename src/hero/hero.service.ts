@@ -44,6 +44,7 @@ export class HeroService {
                 const hero: Hero = {
                     ...heroDB,
                     staked: heroContract.staked,
+                    staker: createHeroDto.staker,
                     lastStaked: heroContract.lastStaked,
                     lastUnstaked: heroContract.lastUnstaked,
                     updated_at: new Date(new Date().toUTCString()),
@@ -88,6 +89,7 @@ export class HeroService {
         hero.will = heroAttr.will;
         hero.cunning = heroAttr.cunning;
         hero.hero_number = createHeroDto.heroNumber;
+        hero.staker = createHeroDto.staker;
         return hero;
     }
 
