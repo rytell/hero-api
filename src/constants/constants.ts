@@ -59,6 +59,7 @@ export const RPC_URL = {
 };
 
 export const STAKING_HERO = {
-    [ChainId.FUJI]: '0xf776AC03A70F8bD499F1CA6786Ec57e730401E0F',
+    // [ChainId.FUJI]: '0xf776AC03A70F8bD499F1CA6786Ec57e730401E0F',
+    [ChainId.FUJI]: '0xc7bA3f3dC4D0eb18914Ce946e2295bA09c118989',
     [ChainId.AVALANCHE]: '',
 };
