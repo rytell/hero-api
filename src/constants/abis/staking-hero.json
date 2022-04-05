@@ -99,19 +99,6 @@
         "type": "uint256"
       }
     ],
-    "name": "acquireOwnership",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "heroNumber",
-        "type": "uint256"
-      }
-    ],
     "name": "contractOwnsHero",
     "outputs": [
       {
@@ -124,7 +111,13 @@
     "type": "function"
   },
   {
-    "inputs": [],
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      }
+    ],
     "name": "getStakedHeros",
     "outputs": [
       {
@@ -148,6 +141,11 @@
             "internalType": "uint256",
             "name": "heroId",
             "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "owner",
+            "type": "address"
           }
         ],
         "internalType": "struct StakeHero.HeroStatus[]",
@@ -241,6 +239,50 @@
     "name": "stake",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "stakedHeros",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "staked",
+        "type": "bool"
+      },
+      {
+        "internalType": "uint256",
+        "name": "lastStaked",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "lastUnstaked",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "heroId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {

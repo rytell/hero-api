@@ -26,6 +26,7 @@ export interface HeroContract {
     lastStaked: string;
     lastUnstaked: string;
     heroId: string;
+    owner: string;
 }
 
 export interface HeroStakingEvent {

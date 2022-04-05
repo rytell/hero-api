@@ -64,13 +64,17 @@ const subscribeToEvents = (stakeHeroContract, callback, currentBlock) => {
 export const syncDb = async (app: INestApplication) => {
     const updateDb = async (heroinfo: HeroStakingEvent) => {
         // should call controller update for stake or unstake
-        await axios.post(`${await app.getUrl()}/hero`, {
-            createHeroDto: {
-                heroNumber: heroinfo.returnValues.heroNumber,
-                blockNumber: heroinfo.returnValues.when, // not necessary
-                staker: heroinfo.returnValues.who,
-            },
-        });
+        try {
+            await axios.post(`${await app.getUrl()}/hero`, {
+                createHeroDto: {
+                    heroNumber: heroinfo.returnValues.heroNumber,
+                    blockNumber: heroinfo.returnValues.when, // not necessary
+                    staker: heroinfo.returnValues.who,
+                },
+            });
+        } catch (error) {
+            console.log('callback error!: ', error.response.data);
+        }
     };
 
     const stakeHeroContract = new web3.eth.Contract(

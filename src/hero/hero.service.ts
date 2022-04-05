@@ -18,10 +18,10 @@ export class HeroService {
     //   createHero: Hero
     async create(createHeroDto: CreateHeroDto): Promise<Hero> | undefined {
         const validateErrors = this.validateHeroDTO(createHeroDto);
-        if( validateErrors.length > 0 ){
-            throw validateErrors
+        if (validateErrors.length > 0) {
+            throw validateErrors;
         }
-        
+
         const heroDB = await this.herosRepository.findOne({
             hero_number: createHeroDto.heroNumber,
         });
@@ -40,11 +40,14 @@ export class HeroService {
         }
 
         if (heroDB) {
-            if (heroDB?.lastStaked < heroContract.lastStaked || heroDB?.lastUnstaked < heroContract.lastUnstaked ) {
+            if (
+                heroDB?.lastStaked < heroContract.lastStaked ||
+                heroDB?.lastUnstaked < heroContract.lastUnstaked
+            ) {
                 const hero: Hero = {
                     ...heroDB,
                     staked: heroContract.staked,
-                    staker: createHeroDto.staker,
+                    staker: heroContract.owner,
                     lastStaked: heroContract.lastStaked,
                     lastUnstaked: heroContract.lastUnstaked,
                     updated_at: new Date(new Date().toUTCString()),
@@ -60,6 +63,7 @@ export class HeroService {
             heroAPI.lastStaked = heroContract.lastStaked;
             heroAPI.lastUnstaked = heroContract.lastUnstaked;
             heroAPI.hero_number = +heroContract.heroId;
+            heroAPI.staker = heroContract.owner;
             return this.herosRepository.save(heroAPI);
         }
     }
@@ -107,9 +111,8 @@ export class HeroService {
             STAKING_HERO[process.env.CHAIN || 43113],
         );
 
-        // TODO: check hero current status
         return await stakeHeroContract.methods
-            .getStakedHeros()
+            .getStakedHeros(caller)
             .call({ from: caller });
     }
 
@@ -126,21 +129,21 @@ export class HeroService {
     }
 
     validateHeroDTO(createHeroDto: CreateHeroDto): string {
-        if( createHeroDto.heroNumber != null ){
-            if( +createHeroDto.heroNumber === 0 ){
+        if (createHeroDto.heroNumber != null) {
+            if (+createHeroDto.heroNumber === 0) {
                 return 'Error, heroNumber required';
             }
         } else {
             return 'Error, heroNumber required';
         }
 
-        if( createHeroDto.staker != null ){
-            if( createHeroDto.staker?.trim() === '' ){
+        if (createHeroDto.staker != null) {
+            if (createHeroDto.staker?.trim() === '') {
                 return 'Error, staker required';
             }
         } else {
             return 'Error, staker required';
         }
-        return ''
+        return '';
     }
 }
