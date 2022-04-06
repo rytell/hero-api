@@ -1,5 +1,6 @@
 import { Controller, Post, Get, Delete, Param, Body } from '@nestjs/common';
 import { CreateHeroDto } from './dto/create-hero';
+import { SimulateClaimDto } from './dto/simulate-claim';
 import { Hero } from './hero.entity';
 import { HeroService } from './hero.service';
 
@@ -26,5 +27,10 @@ export class HeroController {
   @Delete(':id')
   remove(@Param('id') id: string): Promise<void> {
     return this.heroService.remove(id);
+  }
+
+  @Get('simulate-claim/:heroNumber')
+  simulateClaim(@Param('heroNumber') heroNumber: number): Promise<SimulateClaimDto> {
+    return this.heroService.simulateClaim(+heroNumber);
   }
 }
