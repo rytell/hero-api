@@ -1,4 +1,4 @@
-import fs  from 'fs';
+import fs from 'fs';
 import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -10,6 +10,7 @@ import { HeroContract, STAKING_HERO } from '../constants/constants';
 import abi from '../constants/abis/staking-hero.json';
 import { heroFromProps } from 'src/utils/heroFromProps';
 import { SimulateClaimDto } from './dto/simulate-claim';
+import { getRadiContract, web3Utils } from 'src/utils/radiContract';
 @Injectable()
 export class HeroService {
     constructor(
@@ -149,69 +150,88 @@ export class HeroService {
         return '';
     }
 
-    async simulateClaim(heroNumber:number) : Promise<SimulateClaimDto> {
-        let heroWithCoefficient:any = {}
+    async simulateClaim(heroNumber: number): Promise<SimulateClaimDto> {
+        let heroWithCoefficient: any = {};
         let radisBySecond = 0;
-        let accumulated = 0
+        let accumulated = 0;
+        let estimatedGas = 0;
+
         const heroDB = await this.herosRepository.findOne({
             hero_number: heroNumber,
         });
-        
+
         const herosAtContract: HeroContract[] = (
             await this.getCallerHerosStatus(heroDB?.staker)
         ).map((heroProps) => heroFromProps(heroProps));
 
         const heroContract = herosAtContract?.find(
-            (heroProps) =>
-                heroProps.heroId === heroNumber.toString(),
+            (heroProps) => heroProps.heroId === heroNumber.toString(),
         ) as HeroContract;
 
         if (!heroContract) {
             return;
         }
-        if(
-            heroContract.staked !== heroDB.staked 
-            || heroContract.lastStaked !== heroDB.lastStaked 
-            || heroContract.lastUnstaked !== heroDB.lastUnstaked 
-            || heroContract.owner !== heroDB.staker
-            ){
-                const hero: Hero = {
-                    ...heroDB,
-                    staked: heroContract.staked,
-                    staker: heroContract.owner,
-                    lastStaked: heroContract.lastStaked,
-                    lastUnstaked: heroContract.lastUnstaked,
-                    updated_at: new Date(new Date().toUTCString()),
-                };
-                this.herosRepository.save(hero);
-            }
+        if (
+            heroContract.staked !== heroDB.staked ||
+            heroContract.lastStaked !== heroDB.lastStaked ||
+            heroContract.lastUnstaked !== heroDB.lastUnstaked ||
+            heroContract.owner !== heroDB.staker
+        ) {
+            const hero: Hero = {
+                ...heroDB,
+                staked: heroContract.staked,
+                staker: heroContract.owner,
+                lastStaked: heroContract.lastStaked,
+                lastUnstaked: heroContract.lastUnstaked,
+                updated_at: new Date(new Date().toUTCString()),
+            };
+            this.herosRepository.save(hero);
+        }
 
-        const rawHerosData = fs.readFileSync('herosMetadataWithCoefficient.json');
+        const rawHerosData = fs.readFileSync(
+            'herosMetadataWithCoefficient.json',
+        );
         const herosMetadata = JSON.parse(rawHerosData.toString());
 
-        herosMetadata.forEach(hero => {
-            if(hero.heroNumber === heroNumber){
-                heroWithCoefficient = {...hero}
+        herosMetadata.forEach((hero) => {
+            if (hero.heroNumber === heroNumber) {
+                heroWithCoefficient = { ...hero };
             }
         });
-        if(heroContract.staked){
-            const lastStakedTimeStamp = heroContract.lastStaked.toString()+'000';
-            const secondsDifference = this.secondDifference(new Date(), new Date(+lastStakedTimeStamp));
-            radisBySecond = heroWithCoefficient.coefficient * 4 / 86400;
-            accumulated = radisBySecond * secondsDifference
-            
+        if (heroContract.staked) {
+            const lastStakedTimeStamp =
+                heroContract.lastStaked.toString() + '000';
+            const secondsDifference = this.secondDifference(
+                new Date(),
+                new Date(+lastStakedTimeStamp),
+            );
+            radisBySecond = (heroWithCoefficient.coefficient * 4) / 86400;
+            accumulated = radisBySecond * secondsDifference;
+
+            const radiContract = await getRadiContract();
+            const utils = web3Utils();
+            const estimation = await radiContract.methods
+                .transfer(
+                    heroContract.owner,
+                    utils.toWei(accumulated.toString()),
+                )
+                .estimateGas({
+                    from: '0x8658b19585F19CB53d21beF2af43F93df37d9852',
+                });
+            estimatedGas = estimation * 1.15;
         }
-        const response : SimulateClaimDto = {
+        const response: SimulateClaimDto = {
             radisBySecond,
-            accumulated
+            accumulated,
+            estimatedGas,
         };
 
-        return response
+        return response;
     }
 
-    secondDifference(date1,date2): number {
+    secondDifference(date1, date2): number {
         let difference = date1.getTime() - date2.getTime();
-        let secondsDifference = Math.floor(difference/1000);
-        return secondsDifference
+        let secondsDifference = Math.floor(difference / 1000);
+        return secondsDifference;
     }
 }

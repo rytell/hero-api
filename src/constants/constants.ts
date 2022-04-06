@@ -1,4 +1,4 @@
-import { ChainId } from '@rytell/sdk';
+import { ChainId, Token } from '@rytell/sdk';
 
 export interface Block {
     number: number;
@@ -63,4 +63,22 @@ export const STAKING_HERO = {
     // [ChainId.FUJI]: '0xf776AC03A70F8bD499F1CA6786Ec57e730401E0F',
     [ChainId.FUJI]: '0xc7bA3f3dC4D0eb18914Ce946e2295bA09c118989',
     [ChainId.AVALANCHE]: '',
+};
+
+export const RADI: { [chainId in ChainId]: Token } = {
+    [ChainId.FUJI]: new Token(
+        ChainId.FUJI,
+        // '0x600615234c0a427834A4344D10fEaCA374B2dfCB',
+        '0xCcA36c23E977d6c2382dF43e930BC8dE9daC897E',
+        18,
+        'RADI',
+        'RADI',
+    ),
+    [ChainId.AVALANCHE]: new Token(
+        ChainId.AVALANCHE,
+        '0x9c5bBb5169B66773167d86818b3e149A4c7e1d1A',
+        18,
+        'RADI',
+        'RADI',
+    ),
 };
