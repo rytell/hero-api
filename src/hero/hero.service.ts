@@ -199,8 +199,9 @@ export class HeroService {
             }
         });
         if (heroContract.staked) {
+            const currentDate = heroContract.lastStaked > heroDB.lastClaim? heroContract.lastStaked : heroDB.lastClaim;
             const lastStakedTimeStamp =
-                heroContract.lastStaked.toString() + '000';
+              currentDate.toString() + '000';
             const secondsDifference = this.secondDifference(
                 new Date(),
                 new Date(+lastStakedTimeStamp),
