@@ -207,7 +207,6 @@ export class HeroService {
             );
             radisBySecond = (heroWithCoefficient.coefficient * 4) / 86400;
             accumulated = radisBySecond * secondsDifference;
-            console.log(accumulated);
 
             const radiContract = await getRadiContract();
             const utils = web3Utils();
