@@ -5,8 +5,8 @@ export async function getRadiContract() {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const Web3 = require('web3');
     const web3 = new Web3(
-        new Web3.providers.WebsocketProvider(
-            'wss://api.avax-test.network/ext/bc/C/ws',
+        new Web3.providers.HttpProvider(
+            'https://speedy-nodes-nyc.moralis.io/47081753cf11c09387130dee/avalanche/testnet',
         ),
     );
 
