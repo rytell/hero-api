@@ -104,8 +104,8 @@ export class HeroService {
         // eslint-disable-next-line @typescript-eslint/no-var-requires
         const Web3 = require('web3');
         const web3 = new Web3(
-            new Web3.providers.WebsocketProvider(
-                'wss://api.avax-test.network/ext/bc/C/ws',
+            new Web3.providers.HttpProvider(
+                'https://api.avax-test.network/ext/bc/C/rpc',
             ),
         );
 
