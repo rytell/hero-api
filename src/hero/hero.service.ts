@@ -199,9 +199,11 @@ export class HeroService {
             }
         });
         if (heroContract.staked) {
-            const currentDate = heroContract.lastStaked > heroDB.lastClaim? heroContract.lastStaked : heroDB.lastClaim;
-            const lastStakedTimeStamp =
-              currentDate.toString() + '000';
+            const currentDate =
+                heroContract.lastStaked > heroDB.lastClaim
+                    ? heroContract.lastStaked
+                    : heroDB.lastClaim;
+            const lastStakedTimeStamp = currentDate.toString() + '000';
             const secondsDifference = this.secondDifference(
                 new Date(),
                 new Date(+lastStakedTimeStamp),
@@ -214,7 +216,7 @@ export class HeroService {
             const estimation = await radiContract.methods
                 .transfer(
                     heroContract.owner,
-                    utils.toWei(accumulated.toString()),
+                    utils.toWei(accumulated.toFixed(7).toString()),
                 )
                 .estimateGas({
                     from: '0x8658b19585F19CB53d21beF2af43F93df37d9852',
@@ -231,8 +233,8 @@ export class HeroService {
     }
 
     secondDifference(date1, date2): number {
-        let difference = date1.getTime() - date2.getTime();
-        let secondsDifference = Math.floor(difference / 1000);
+        const difference = date1.getTime() - date2.getTime();
+        const secondsDifference = Math.floor(difference / 1000);
         return secondsDifference;
     }
 }
