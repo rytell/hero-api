@@ -11,6 +11,7 @@ import abi from '../constants/abis/staking-hero.json';
 import { heroFromProps } from 'src/utils/heroFromProps';
 import { SimulateClaimDto } from './dto/simulate-claim';
 import { getRadiContract, web3Utils } from 'src/utils/radiContract';
+import { ClaimHeroDto } from './dto/claim-hero';
 @Injectable()
 export class HeroService {
     constructor(
@@ -211,17 +212,10 @@ export class HeroService {
             radisBySecond = (heroWithCoefficient.coefficient * 4) / 86400;
             accumulated = radisBySecond * secondsDifference;
 
-            const radiContract = await getRadiContract();
-            const utils = web3Utils();
-            const estimation = await radiContract.methods
-                .transfer(
-                    heroContract.owner,
-                    utils.toWei(accumulated.toFixed(7).toString()),
-                )
-                .estimateGas({
-                    from: '0x8658b19585F19CB53d21beF2af43F93df37d9852',
-                });
-            estimatedGas = estimation * 1.15;
+            estimatedGas = await this.getTransferGasEstimation(
+                heroContract.owner,
+                accumulated,
+            );
         }
         const response: SimulateClaimDto = {
             radisBySecond,
@@ -232,9 +226,65 @@ export class HeroService {
         return response;
     }
 
+    async getTransferGasEstimation(receiver: string, amount: number) {
+        const radiContract = await getRadiContract();
+        const utils = web3Utils();
+        const estimation = await radiContract.methods
+            .transfer(receiver, utils.toWei(amount.toFixed(7).toString()))
+            .estimateGas({
+                from: '0x8658b19585F19CB53d21beF2af43F93df37d9852',
+            });
+        return estimation * 1.2;
+    }
+
     secondDifference(date1, date2): number {
         const difference = date1.getTime() - date2.getTime();
         const secondsDifference = Math.floor(difference / 1000);
         return secondsDifference;
+    }
+
+    async getAccountFromAPI(): Promise<any> {
+        const snowtraceAPIBaseUrl = process.env.SNOWTRACEBASEURL;
+        const response = await firstValueFrom(
+            this.httpService.get(
+                `${snowtraceAPIBaseUrl}/api?module=account&action=txlist&address=0xCd8345b1f1a0B86EE3F9706b1bF31DA7850b8fDF&startblock=1&endblock=99999999&sort=desc`,
+            ),
+        );
+
+        return response.data;
+    }
+
+    async claimHero(claimHeroDto: ClaimHeroDto): Promise<any> {
+        try {
+            const estimation = await this.simulateClaim(
+                claimHeroDto.heroNumber,
+            );
+            const txs = await this.getAccountFromAPI();
+
+            const tx = await txs.result.find(
+                (tx) =>
+                    tx.hash.toLowerCase() ===
+                    claimHeroDto.transactionHash.toLowerCase(),
+            );
+
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
+            const Web3 = require('web3');
+            const web3 = new Web3(
+                new Web3.providers.HttpProvider(
+                    'https://speedy-nodes-nyc.moralis.io/47081753cf11c09387130dee/avalanche/testnet',
+                ),
+            );
+
+            const gasPrice = await web3.eth.getGasPrice();
+            console.log(gasPrice);
+            const fee = estimation.estimatedGas * gasPrice;
+            console.log('we estimate this fee: ', fee);
+            // TODO: percentage difference
+            // Math.abs(fee - value / fee)
+
+            return { estimation, tx, fee };
+        } catch (error) {
+            console.log(error);
+        }
     }
 }
