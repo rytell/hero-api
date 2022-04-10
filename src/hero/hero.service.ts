@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { InjectRepository } from '@nestjs/typeorm';
 import { firstValueFrom } from 'rxjs';
@@ -12,11 +12,14 @@ import { heroFromProps } from 'src/utils/heroFromProps';
 import { SimulateClaimDto } from './dto/simulate-claim';
 import { getRadiContract, web3Utils } from 'src/utils/radiContract';
 import { ClaimHeroDto } from './dto/claim-hero';
+import { ClaimTransaction } from './claim-transaction.entity';
 @Injectable()
 export class HeroService {
     constructor(
         @InjectRepository(Hero)
         private readonly herosRepository: Repository<Hero>,
+        @InjectRepository(ClaimTransaction)
+        private readonly claimTransactionsRepository: Repository<ClaimTransaction>,
         private httpService: HttpService,
     ) {}
     //   createHero: Hero
@@ -201,10 +204,10 @@ export class HeroService {
         });
         if (heroContract.staked) {
             const currentDate =
-                heroContract.lastStaked > heroDB.lastClaim
-                    ? heroContract.lastStaked
+                heroContract.lastStaked + '000' > heroDB.lastClaim
+                    ? heroContract.lastStaked + '000'
                     : heroDB.lastClaim;
-            const lastStakedTimeStamp = currentDate.toString() + '000';
+            const lastStakedTimeStamp = currentDate.toString();
             const secondsDifference = this.secondDifference(
                 new Date(),
                 new Date(+lastStakedTimeStamp),
@@ -247,14 +250,39 @@ export class HeroService {
         const snowtraceAPIBaseUrl = process.env.SNOWTRACEBASEURL;
         const response = await firstValueFrom(
             this.httpService.get(
-                `${snowtraceAPIBaseUrl}/api?module=account&action=txlist&address=0xCd8345b1f1a0B86EE3F9706b1bF31DA7850b8fDF&startblock=1&endblock=99999999&sort=desc`,
+                `${snowtraceAPIBaseUrl}/api?module=account&action=txlist&address=0x8658b19585F19CB53d21beF2af43F93df37d9852&startblock=1&endblock=99999999&sort=desc`,
             ),
         );
 
         return response.data;
     }
 
+    validateClaimTransactionDTO(claimTransactionDto: ClaimHeroDto): string {
+        if (claimTransactionDto.heroNumber != null) {
+            if (+claimTransactionDto.heroNumber === 0) {
+                return 'Error, heroNumber required';
+            }
+        } else {
+            return 'Error, heroNumber required';
+        }
+
+        if (claimTransactionDto.transactionHash != null) {
+            if (claimTransactionDto.transactionHash?.trim() === '') {
+                return 'Error, hash required';
+            }
+        } else {
+            return 'Error, hash required';
+        }
+
+        return '';
+    }
+
     async claimHero(claimHeroDto: ClaimHeroDto): Promise<any> {
+        const validateErrors = this.validateClaimTransactionDTO(claimHeroDto);
+        if (validateErrors.length > 0) {
+            throw validateErrors;
+        }
+
         try {
             const estimation = await this.simulateClaim(
                 claimHeroDto.heroNumber,
@@ -267,24 +295,133 @@ export class HeroService {
                     claimHeroDto.transactionHash.toLowerCase(),
             );
 
-            // eslint-disable-next-line @typescript-eslint/no-var-requires
-            const Web3 = require('web3');
-            const web3 = new Web3(
-                new Web3.providers.HttpProvider(
-                    'https://speedy-nodes-nyc.moralis.io/47081753cf11c09387130dee/avalanche/testnet',
-                ),
-            );
+            if (!tx) {
+                throw new HttpException('Tx Not Found', HttpStatus.NOT_FOUND);
+            }
 
-            const gasPrice = await web3.eth.getGasPrice();
-            console.log(gasPrice);
-            const fee = estimation.estimatedGas * gasPrice;
-            console.log('we estimate this fee: ', fee);
-            // TODO: percentage difference
-            // Math.abs(fee - value / fee)
+            const hero = await this.herosRepository.findOne({
+                hero_number: claimHeroDto.heroNumber,
+            });
 
-            return { estimation, tx, fee };
+            if (!hero) {
+                throw new HttpException('Hero Not Found', HttpStatus.NOT_FOUND);
+            }
+
+            const claimTransaction = {
+                hash: claimHeroDto.transactionHash,
+                staker: hero.staker,
+                value: tx.value,
+                redeemed: false,
+                character: hero.hero_number,
+            };
+
+            try {
+                const transactionDb =
+                    await this.claimTransactionsRepository.save(
+                        claimTransaction,
+                    );
+
+                // eslint-disable-next-line @typescript-eslint/no-var-requires
+                const Web3 = require('web3');
+                const web3 = new Web3(
+                    new Web3.providers.HttpProvider(
+                        'https://speedy-nodes-nyc.moralis.io/47081753cf11c09387130dee/avalanche/testnet',
+                    ),
+                );
+
+                const gasPrice = await web3.eth.getGasPrice();
+                const fee = estimation.estimatedGas * gasPrice;
+                const percentageDifference =
+                    Math.abs((fee - tx.value) / fee) * 100;
+
+                if (percentageDifference > 15) {
+                    throw new HttpException(
+                        'Difference from payment and current estimation is too high for us to process the claim.',
+                        HttpStatus.BAD_REQUEST,
+                    );
+                }
+
+                const tryTransferRadi = async () => {
+                    const radiContract = await getRadiContract();
+                    const utils = web3Utils();
+                    const address =
+                        '0x8658b19585F19CB53d21beF2af43F93df37d9852';
+                    try {
+                        const transferTx = radiContract.methods.transfer(
+                            transactionDb.staker,
+                            utils.toWei(
+                                estimation.accumulated.toFixed(7).toString(),
+                            ),
+                        );
+                        try {
+                            const gas = await transferTx.estimateGas({
+                                from: address,
+                            });
+                            try {
+                                const gasPrice = await web3.eth.getGasPrice();
+                                const data = transferTx.encodeABI();
+                                const nonce =
+                                    await web3.eth.getTransactionCount(address);
+                                const chainId = await web3.eth.net.getId();
+                                const privateKey = process.env.PRIVATE_KEY;
+                                const signedTx =
+                                    await web3.eth.accounts.signTransaction(
+                                        {
+                                            to: radiContract.options.address,
+                                            data,
+                                            gas,
+                                            gasPrice,
+                                            nonce,
+                                            chainId,
+                                        },
+                                        privateKey,
+                                    );
+
+                                const receipt =
+                                    await web3.eth.sendSignedTransaction(
+                                        signedTx.rawTransaction,
+                                    );
+                            } catch (error) {
+                                console.log(error, ': ERROR SENDING');
+                                throw new Error('ERROR SENDING TX: TRANSFER');
+                            }
+                        } catch (error) {
+                            console.log(error, ': ERROR ESTIMATING');
+                            // await sendError(error);
+                            throw new Error('ERROR ESTIMATING: TRANSFER');
+                        }
+
+                        transactionDb.redeemed = true;
+                        await this.claimTransactionsRepository.save(
+                            transactionDb,
+                        );
+                        hero.lastClaim = new Date().getTime().toString();
+                        this.herosRepository.save(hero);
+                    } catch (error) {
+                        console.log('catched: ', error, ': catched');
+                    }
+                };
+
+                await tryTransferRadi();
+
+                return {
+                    estimation,
+                    tx,
+                    fee,
+                    percentageDifference,
+                    redeemed: transactionDb.redeemed,
+                };
+            } catch (error) {
+                throw new HttpException(
+                    "Transaction could'nt be saved",
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
         } catch (error) {
-            console.log(error);
+            throw new HttpException(
+                'Unexpected',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
         }
     }
 }

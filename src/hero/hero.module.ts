@@ -4,13 +4,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { HeroService } from './hero.service';
 import { HeroController } from './hero.controller';
 import { Hero } from './hero.entity';
+import { ClaimTransaction } from './claim-transaction.entity';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Hero]),
-    HttpModule,
-  ],
-  providers: [HeroService],
-  controllers: [HeroController]
+    imports: [TypeOrmModule.forFeature([Hero, ClaimTransaction]), HttpModule],
+    providers: [HeroService],
+    controllers: [HeroController],
 })
 export class HeroModule {}
