@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import * as dotenv from 'dotenv';
 import { AppModule } from './app.module';
-// import { syncDb } from './dbUpdater';s
+import { syncDb } from './dbUpdater';
 
 async function bootstrap() {
     dotenv.config();
@@ -9,7 +9,7 @@ async function bootstrap() {
     app.enableCors();
     await app.listen(process.env.PORT || 3000);
     console.log(`Application is running on: ${await app.getUrl()}`);
-    // syncDb(app);
+    syncDb(app);
 }
 
 bootstrap();
