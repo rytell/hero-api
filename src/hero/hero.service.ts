@@ -377,18 +377,20 @@ export class HeroService {
                                         privateKey,
                                     );
 
-                                const receipt =
-                                    await web3.eth.sendSignedTransaction(
-                                        signedTx.rawTransaction,
-                                    );
+                                await web3.eth.sendSignedTransaction(
+                                    signedTx.rawTransaction,
+                                );
                             } catch (error) {
-                                console.log(error, ': ERROR SENDING');
-                                throw new Error('ERROR SENDING TX: TRANSFER');
+                                throw new HttpException(
+                                    error,
+                                    HttpStatus.INTERNAL_SERVER_ERROR,
+                                );
                             }
                         } catch (error) {
-                            console.log(error, ': ERROR ESTIMATING');
-                            // await sendError(error);
-                            throw new Error('ERROR ESTIMATING: TRANSFER');
+                            throw new HttpException(
+                                error,
+                                HttpStatus.INTERNAL_SERVER_ERROR,
+                            );
                         }
 
                         transactionDb.redeemed = true;
@@ -398,7 +400,10 @@ export class HeroService {
                         hero.lastClaim = new Date().getTime().toString();
                         this.herosRepository.save(hero);
                     } catch (error) {
-                        console.log('catched: ', error, ': catched');
+                        throw new HttpException(
+                            error,
+                            HttpStatus.INTERNAL_SERVER_ERROR,
+                        );
                     }
                 };
 
