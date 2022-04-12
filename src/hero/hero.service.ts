@@ -156,7 +156,9 @@ export class HeroService {
         return '';
     }
 
-    async simulateClaim(simulateClaimHeroDto: CreateHeroDto): Promise<SimulateClaimDto> {
+    async simulateClaim(
+        simulateClaimHeroDto: CreateHeroDto,
+    ): Promise<SimulateClaimDto> {
         let heroWithCoefficient: any = {};
         let radisBySecond = 0;
         let accumulated = 0;
@@ -170,14 +172,15 @@ export class HeroService {
         ).map((heroProps) => heroFromProps(heroProps));
 
         const heroContract = herosAtContract?.find(
-            (heroProps) => heroProps.heroId === simulateClaimHeroDto.heroNumber.toString(),
+            (heroProps) =>
+                heroProps.heroId === simulateClaimHeroDto.heroNumber.toString(),
         ) as HeroContract;
 
         if (!heroContract) {
             return;
         }
-        if(!heroDB){
-            heroDB = await this.create(simulateClaimHeroDto)
+        if (!heroDB) {
+            heroDB = await this.create(simulateClaimHeroDto);
         }
         if (
             heroContract.staked !== heroDB.staked ||
@@ -289,12 +292,11 @@ export class HeroService {
         const heroDB = await this.herosRepository.findOne({
             hero_number: claimHeroDto.heroNumber,
         });
-        
 
         try {
             const estimation = await this.simulateClaim({
                 heroNumber: heroDB.hero_number,
-                staker: heroDB.staker
+                staker: heroDB.staker,
             });
             const txs = await this.getAccountFromAPI();
 
@@ -390,14 +392,16 @@ export class HeroService {
                                     signedTx.rawTransaction,
                                 );
                             } catch (error) {
-                                sendError(JSON.stringify({error, claimHeroDto}))
+                                sendError(
+                                    JSON.stringify({ error, claimHeroDto }),
+                                );
                                 throw new HttpException(
                                     error,
                                     HttpStatus.INTERNAL_SERVER_ERROR,
                                 );
                             }
                         } catch (error) {
-                            sendError(JSON.stringify({error, claimHeroDto}))
+                            sendError(JSON.stringify({ error, claimHeroDto }));
                             throw new HttpException(
                                 error,
                                 HttpStatus.INTERNAL_SERVER_ERROR,
@@ -411,7 +415,7 @@ export class HeroService {
                         hero.lastClaim = new Date().getTime().toString();
                         this.herosRepository.save(hero);
                     } catch (error) {
-                        sendError(JSON.stringify({error, claimHeroDto}))
+                        sendError(JSON.stringify({ error, claimHeroDto }));
                         throw new HttpException(
                             error,
                             HttpStatus.INTERNAL_SERVER_ERROR,
@@ -435,11 +439,34 @@ export class HeroService {
                 );
             }
         } catch (error) {
-            sendError(JSON.stringify({error, claimHeroDto}))
+            sendError(JSON.stringify({ error, claimHeroDto }));
             throw new HttpException(
                 'Unexpected',
                 HttpStatus.INTERNAL_SERVER_ERROR,
             );
         }
+    }
+
+    getEarningRate(heroNumber: number) {
+        let heroWithCoefficient: any = {};
+
+        const rawHerosData = fs.readFileSync(
+            'herosMetadataWithCoefficient.json',
+        );
+        const herosMetadata = JSON.parse(rawHerosData.toString());
+
+        herosMetadata.forEach((hero) => {
+            if (+hero.heroNumber === +heroNumber) {
+                heroWithCoefficient = { ...hero };
+            }
+        });
+
+        if (!heroWithCoefficient.coefficient) {
+            throw new HttpException('Hero Not Found', HttpStatus.NOT_FOUND);
+        }
+
+        return {
+            dailyRate: heroWithCoefficient.coefficient * 4,
+        };
     }
 }

@@ -30,6 +30,13 @@ export class HeroController {
         return this.heroService.remove(id);
     }
 
+    @Get('daily-rate/:hero')
+    earningRate(@Param('hero') hero: number): {
+        dailyRate: number;
+    } {
+        return this.heroService.getEarningRate(hero);
+    }
+
     @Post('simulate-claim')
     simulateClaim(@Body() body): Promise<SimulateClaimDto> {
         const simulateClaimHeroDTO: CreateHeroDto = body.createHeroDto;
