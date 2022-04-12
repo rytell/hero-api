@@ -32,6 +32,7 @@
     "@rytell/tokens": "^1.0.1",
     "@types/express": "^4.17.13",
     "@types/node": "^16.0.0",
+    "aws-sdk": "^2.1112.0",
     "dotenv": "^16.0.0",
     "jsonwebtoken": "^8.5.1",
     "pg": "^8.7.3",

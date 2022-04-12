@@ -13,6 +13,8 @@ import { SimulateClaimDto } from './dto/simulate-claim';
 import { getRadiContract, web3Utils } from 'src/utils/radiContract';
 import { ClaimHeroDto } from './dto/claim-hero';
 import { ClaimTransaction } from './claim-transaction.entity';
+import { sendError } from 'src/utils/sender';
+
 @Injectable()
 export class HeroService {
     constructor(
@@ -381,12 +383,14 @@ export class HeroService {
                                     signedTx.rawTransaction,
                                 );
                             } catch (error) {
+                                sendError(JSON.stringify({error, claimHeroDto}))
                                 throw new HttpException(
                                     error,
                                     HttpStatus.INTERNAL_SERVER_ERROR,
                                 );
                             }
                         } catch (error) {
+                            sendError(JSON.stringify({error, claimHeroDto}))
                             throw new HttpException(
                                 error,
                                 HttpStatus.INTERNAL_SERVER_ERROR,
@@ -400,6 +404,7 @@ export class HeroService {
                         hero.lastClaim = new Date().getTime().toString();
                         this.herosRepository.save(hero);
                     } catch (error) {
+                        sendError(JSON.stringify({error, claimHeroDto}))
                         throw new HttpException(
                             error,
                             HttpStatus.INTERNAL_SERVER_ERROR,
@@ -423,6 +428,7 @@ export class HeroService {
                 );
             }
         } catch (error) {
+            sendError(JSON.stringify({error, claimHeroDto}))
             throw new HttpException(
                 'Unexpected',
                 HttpStatus.INTERNAL_SERVER_ERROR,
