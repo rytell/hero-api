@@ -34,7 +34,7 @@ export class Hero extends BaseEntity {
     @Column({ type: 'int', nullable: false })
     will: number;
 
-    @PrimaryColumn({ type: 'int', nullable: false })
+    @Column({ type: 'int', nullable: false, unique: true })
     hero_number: number;
 
     @Column({ nullable: false })

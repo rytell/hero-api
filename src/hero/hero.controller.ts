@@ -30,11 +30,10 @@ export class HeroController {
         return this.heroService.remove(id);
     }
 
-    @Get('simulate-claim/:heroNumber')
-    simulateClaim(
-        @Param('heroNumber') heroNumber: number,
-    ): Promise<SimulateClaimDto> {
-        return this.heroService.simulateClaim(+heroNumber);
+    @Post('simulate-claim')
+    simulateClaim(@Body() body): Promise<SimulateClaimDto> {
+        const simulateClaimHeroDTO: CreateHeroDto = body.createHeroDto;
+        return this.heroService.simulateClaim(simulateClaimHeroDTO);
     }
 
     @Post('claim')
