@@ -156,26 +156,28 @@ export class HeroService {
         return '';
     }
 
-    async simulateClaim(heroNumber: number): Promise<SimulateClaimDto> {
+    async simulateClaim(simulateClaimHeroDto: CreateHeroDto): Promise<SimulateClaimDto> {
         let heroWithCoefficient: any = {};
         let radisBySecond = 0;
         let accumulated = 0;
         let estimatedGas = 0;
 
-        const heroDB = await this.herosRepository.findOne({
-            hero_number: heroNumber,
+        let heroDB = await this.herosRepository.findOne({
+            hero_number: simulateClaimHeroDto.heroNumber,
         });
-
         const herosAtContract: HeroContract[] = (
-            await this.getCallerHerosStatus(heroDB?.staker)
+            await this.getCallerHerosStatus(simulateClaimHeroDto.staker)
         ).map((heroProps) => heroFromProps(heroProps));
 
         const heroContract = herosAtContract?.find(
-            (heroProps) => heroProps.heroId === heroNumber.toString(),
+            (heroProps) => heroProps.heroId === simulateClaimHeroDto.heroNumber.toString(),
         ) as HeroContract;
 
         if (!heroContract) {
             return;
+        }
+        if(!heroDB){
+            heroDB = await this.create(simulateClaimHeroDto)
         }
         if (
             heroContract.staked !== heroDB.staked ||
@@ -200,7 +202,7 @@ export class HeroService {
         const herosMetadata = JSON.parse(rawHerosData.toString());
 
         herosMetadata.forEach((hero) => {
-            if (hero.heroNumber === heroNumber) {
+            if (hero.heroNumber === simulateClaimHeroDto.heroNumber) {
                 heroWithCoefficient = { ...hero };
             }
         });
@@ -227,7 +229,6 @@ export class HeroService {
             accumulated,
             estimatedGas,
         };
-
         return response;
     }
 
@@ -285,10 +286,16 @@ export class HeroService {
             throw validateErrors;
         }
 
+        const heroDB = await this.herosRepository.findOne({
+            hero_number: claimHeroDto.heroNumber,
+        });
+        
+
         try {
-            const estimation = await this.simulateClaim(
-                claimHeroDto.heroNumber,
-            );
+            const estimation = await this.simulateClaim({
+                heroNumber: heroDB.hero_number,
+                staker: heroDB.staker
+            });
             const txs = await this.getAccountFromAPI();
 
             const tx = await txs.result.find(
