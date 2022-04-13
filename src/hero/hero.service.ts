@@ -300,7 +300,7 @@ export class HeroService {
             const searchTx = async () => {
                 const txs = await this.getAccountFromAPI();
 
-                const tx = await txs.result.find(
+                const tx = await txs?.result?.find?.(
                     (tx) =>
                         tx.hash.toLowerCase() ===
                         claimHeroDto.transactionHash.toLowerCase(),
