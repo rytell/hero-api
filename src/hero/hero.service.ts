@@ -441,7 +441,6 @@ export class HeroService {
                 );
             }
         } catch (error) {
-            console.log(error, ': pedro');
             sendError(JSON.stringify({ error, claimHeroDto }));
             throw new HttpException(
                 'Unexpected',
@@ -451,19 +450,16 @@ export class HeroService {
     }
 
     async retryCallbackTimes(callback: any, times: number) {
-        let runTimes = 0;
-        let stop = false;
-        while (runTimes < times && !stop) {
-            try {
-                const result = await callback();
-                if (result) {
-                    stop = true;
-                    return result;
-                }
-            } catch (error) {
-                console.log(error);
+        if (times > 0) {
+            const result = await callback();
+            if (result) {
+                return result;
+            } else {
+                console.log('trying again: ', times);
+                return await this.retryCallbackTimes(callback, --times);
             }
-            runTimes++;
+        } else {
+            return undefined;
         }
     }
 
