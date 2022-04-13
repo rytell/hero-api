@@ -254,7 +254,7 @@ export class HeroService {
         const snowtraceAPIBaseUrl = process.env.SNOWTRACEBASEURL;
         const response = await firstValueFrom(
             this.httpService.get(
-                `${snowtraceAPIBaseUrl}/api?module=account&action=txlist&address=0x8658b19585F19CB53d21beF2af43F93df37d9852&startblock=1&endblock=99999999&sort=desc`,
+                `${snowtraceAPIBaseUrl}/api?module=account&action=txlist&address=${process.env.GAME_EMISSIONS_FUND_ADDRESS}&startblock=1&endblock=99999999&sort=desc`,
             ),
         );
 
@@ -296,13 +296,20 @@ export class HeroService {
                 heroNumber: heroDB.hero_number,
                 staker: heroDB.staker,
             });
-            const txs = await this.getAccountFromAPI();
 
-            const tx = await txs.result.find(
-                (tx) =>
-                    tx.hash.toLowerCase() ===
-                    claimHeroDto.transactionHash.toLowerCase(),
-            );
+            const searchTx = async () => {
+                const txs = await this.getAccountFromAPI();
+
+                const tx = await txs.result.find(
+                    (tx) =>
+                        tx.hash.toLowerCase() ===
+                        claimHeroDto.transactionHash.toLowerCase(),
+                );
+
+                return tx;
+            };
+
+            const tx = await this.retryCallbackTimes(searchTx, 15);
 
             if (!tx) {
                 throw new HttpException('Tx Not Found', HttpStatus.NOT_FOUND);
@@ -434,11 +441,29 @@ export class HeroService {
                 );
             }
         } catch (error) {
+            console.log(error, ': pedro');
             sendError(JSON.stringify({ error, claimHeroDto }));
             throw new HttpException(
                 'Unexpected',
                 HttpStatus.INTERNAL_SERVER_ERROR,
             );
+        }
+    }
+
+    async retryCallbackTimes(callback: any, times: number) {
+        let runTimes = 0;
+        let stop = false;
+        while (runTimes < times && !stop) {
+            try {
+                const result = await callback();
+                if (result) {
+                    stop = true;
+                    return result;
+                }
+            } catch (error) {
+                console.log(error);
+            }
+            runTimes++;
         }
     }
 
