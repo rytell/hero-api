@@ -296,7 +296,6 @@ export class HeroService {
                 heroNumber: heroDB.hero_number,
                 staker: heroDB.staker,
             });
-
             const searchTx = async () => {
                 const txs = await this.getAccountFromAPI();
 
@@ -323,15 +322,31 @@ export class HeroService {
                 throw new HttpException('Hero Not Found', HttpStatus.NOT_FOUND);
             }
 
-            const claimTransaction = {
+            let claimTransaction = {};
+            const claimTransactionDB = await this.claimTransactionsRepository.findOne({
                 hash: claimHeroDto.transactionHash,
-                staker: hero.staker,
-                value: tx.value,
                 redeemed: false,
-                character: hero.hero_number,
-            };
-
+            });
+            if(claimTransactionDB){
+                claimTransaction = {
+                    ...claimTransactionDB,
+                    hash: claimHeroDto.transactionHash,
+                    staker: hero.staker,
+                    value: tx.value,
+                    redeemed: false,
+                    character: hero.hero_number,
+                };
+            }else{
+                 claimTransaction = {
+                    hash: claimHeroDto.transactionHash,
+                    staker: hero.staker,
+                    value: tx.value,
+                    redeemed: false,
+                    character: hero.hero_number,
+                };
+            }
             try {
+
                 const transactionDb =
                     await this.claimTransactionsRepository.save(
                         claimTransaction,
