@@ -3,7 +3,7 @@ import { BaseEntity } from '../base-entity';
 
 @Entity('claim-transactions')
 export class ClaimTransaction extends BaseEntity {
-    @PrimaryColumn({ nullable: false })
+    @Column({ nullable: false, unique: true })
     hash: string;
 
     @Column({ type: 'int', nullable: false })
