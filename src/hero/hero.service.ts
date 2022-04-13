@@ -6,7 +6,7 @@ import { firstValueFrom } from 'rxjs';
 import { Repository } from 'typeorm';
 import { CreateHeroDto } from './dto/create-hero';
 import { Hero } from './hero.entity';
-import { HeroContract, STAKING_HERO } from '../constants/constants';
+import { HeroContract, RPC_URL, STAKING_HERO } from '../constants/constants';
 import abi from '../constants/abis/staking-hero.json';
 import { heroFromProps } from 'src/utils/heroFromProps';
 import { SimulateClaimDto } from './dto/simulate-claim';
@@ -110,9 +110,7 @@ export class HeroService {
         // eslint-disable-next-line @typescript-eslint/no-var-requires
         const Web3 = require('web3');
         const web3 = new Web3(
-            new Web3.providers.HttpProvider(
-                'https://speedy-nodes-nyc.moralis.io/47081753cf11c09387130dee/avalanche/testnet',
-            ),
+            new Web3.providers.HttpProvider(RPC_URL[process.env.CHAIN]),
         );
 
         const stakeHeroContract = new web3.eth.Contract(
@@ -241,7 +239,7 @@ export class HeroService {
         const estimation = await radiContract.methods
             .transfer(receiver, utils.toWei(amount.toFixed(7).toString()))
             .estimateGas({
-                from: '0x8658b19585F19CB53d21beF2af43F93df37d9852',
+                from: process.env.GAME_EMISSIONS_FUND_ADDRESS,
             });
         return estimation * 1.2;
     }
@@ -335,9 +333,7 @@ export class HeroService {
                 // eslint-disable-next-line @typescript-eslint/no-var-requires
                 const Web3 = require('web3');
                 const web3 = new Web3(
-                    new Web3.providers.HttpProvider(
-                        'https://speedy-nodes-nyc.moralis.io/47081753cf11c09387130dee/avalanche/testnet',
-                    ),
+                    new Web3.providers.HttpProvider(RPC_URL[process.env.CHAIN]),
                 );
 
                 const gasPrice = await web3.eth.getGasPrice();
@@ -355,8 +351,7 @@ export class HeroService {
                 const tryTransferRadi = async () => {
                     const radiContract = await getRadiContract();
                     const utils = web3Utils();
-                    const address =
-                        '0x8658b19585F19CB53d21beF2af43F93df37d9852';
+                    const address = process.env.GAME_EMISSIONS_FUND_ADDRESS;
                     try {
                         const transferTx = radiContract.methods.transfer(
                             transactionDb.staker,

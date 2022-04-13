@@ -55,8 +55,17 @@ export interface HeroStakingEvent {
 }
 
 export const RPC_URL = {
-    [ChainId.FUJI]: 'https://api.avax-test.network/ext/bc/C/rpc',
-    [ChainId.AVALANCHE]: 'https://api.avax.network/ext/bc/C/rpc',
+    [ChainId.FUJI]:
+        'https://speedy-nodes-nyc.moralis.io/47081753cf11c09387130dee/avalanche/testnet',
+    [ChainId.AVALANCHE]:
+        'https://speedy-nodes-nyc.moralis.io/47081753cf11c09387130dee/avalanche/mainnet',
+};
+
+export const WSS_URL = {
+    [ChainId.FUJI]:
+        'wss://speedy-nodes-nyc.moralis.io/47081753cf11c09387130dee/avalanche/testnet/ws',
+    [ChainId.AVALANCHE]:
+        'wss://speedy-nodes-nyc.moralis.io/47081753cf11c09387130dee/avalanche/mainnet/ws',
 };
 
 export const STAKING_HERO = {

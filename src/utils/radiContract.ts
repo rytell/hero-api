@@ -1,13 +1,11 @@
 import { abi as RADI_ABI } from '@rytell/tokens/artifacts/contracts/Radi.sol/Radi.json';
-import { RADI } from 'src/constants/constants';
+import { RADI, RPC_URL } from 'src/constants/constants';
 
 export async function getRadiContract() {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const Web3 = require('web3');
     const web3 = new Web3(
-        new Web3.providers.HttpProvider(
-            'https://speedy-nodes-nyc.moralis.io/47081753cf11c09387130dee/avalanche/testnet',
-        ),
+        new Web3.providers.HttpProvider(RPC_URL[process.env.CHAIN]),
     );
 
     const radiContract = new web3.eth.Contract(

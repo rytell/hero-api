@@ -1,4 +1,4 @@
-import { HeroStakingEvent, STAKING_HERO } from './constants/constants';
+import { HeroStakingEvent, STAKING_HERO, WSS_URL } from './constants/constants';
 import abi from './constants/abis/staking-hero.json';
 import { INestApplication } from '@nestjs/common';
 import axios from 'axios';
@@ -6,9 +6,7 @@ import axios from 'axios';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const Web3 = require('web3');
 const web3 = new Web3(
-    new Web3.providers.WebsocketProvider(
-        'wss://speedy-nodes-nyc.moralis.io/47081753cf11c09387130dee/avalanche/testnet/ws',
-    ),
+    new Web3.providers.WebsocketProvider(WSS_URL[process.env.CHAIN]),
 );
 
 const MAX_BLOCKS_BEHIND = 2045;
