@@ -323,11 +323,12 @@ export class HeroService {
             }
 
             let claimTransaction = {};
-            const claimTransactionDB = await this.claimTransactionsRepository.findOne({
-                hash: claimHeroDto.transactionHash,
-                redeemed: false,
-            });
-            if(claimTransactionDB){
+            const claimTransactionDB =
+                await this.claimTransactionsRepository.findOne({
+                    hash: claimHeroDto.transactionHash,
+                    redeemed: false,
+                });
+            if (claimTransactionDB) {
                 claimTransaction = {
                     ...claimTransactionDB,
                     hash: claimHeroDto.transactionHash,
@@ -335,18 +336,19 @@ export class HeroService {
                     value: tx.value,
                     redeemed: false,
                     character: hero.hero_number,
+                    radiValue: estimation.accumulated,
                 };
-            }else{
-                 claimTransaction = {
+            } else {
+                claimTransaction = {
                     hash: claimHeroDto.transactionHash,
                     staker: hero.staker,
                     value: tx.value,
                     redeemed: false,
                     character: hero.hero_number,
+                    radiValue: estimation.accumulated,
                 };
             }
             try {
-
                 const transactionDb =
                     await this.claimTransactionsRepository.save(
                         claimTransaction,

@@ -1,4 +1,4 @@
-import { Column, Entity, PrimaryColumn } from 'typeorm';
+import { Column, Entity } from 'typeorm';
 import { BaseEntity } from '../base-entity';
 
 @Entity('claim-transactions')
@@ -14,6 +14,9 @@ export class ClaimTransaction extends BaseEntity {
 
     @Column({ type: 'float', nullable: false })
     value: number;
+
+    @Column({ type: 'float', nullable: false, default: 0 })
+    radiValue: number;
 
     @Column({ nullable: false })
     redeemed: boolean;
