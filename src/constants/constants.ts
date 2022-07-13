@@ -55,17 +55,13 @@ export interface HeroStakingEvent {
 }
 
 export const RPC_URL = {
-    [ChainId.FUJI]:
-        'https://api.avax-test.network/ext/bc/C/rpc',
-    [ChainId.AVALANCHE]:
-        'https://api.avax.network/ext/bc/C/rpc',
+    [ChainId.FUJI]: 'https://api.avax-test.network/ext/bc/C/rpc',
+    [ChainId.AVALANCHE]: 'https://api.avax.network/ext/bc/C/rpc',
 };
 
 export const WSS_URL = {
-    [ChainId.FUJI]:
-        'wss://api.avax-test.network/ext/bc/C/ws',
-    [ChainId.AVALANCHE]:
-        'wss://api.avax.network/ext/bc/C/ws',
+    [ChainId.FUJI]: 'wss://api.avax-test.network/ext/bc/C/ws',
+    [ChainId.AVALANCHE]: 'wss://api.avax.network/ext/bc/C/ws',
 };
 
 export const STAKING_HERO = {
